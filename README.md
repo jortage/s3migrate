@@ -3,9 +3,10 @@ A miniature command-line tool for migrating entire buckets between S3-compatible
 servers, such as S3-to-Jortage, Wasabi-to-DOSpaces, etc.
 
 ## Usage
-Just execute `./s3migrate`. (Java must be installed.) The tool will walk you
-through all the data it needs, and then print out a summary of what it's doing
-until it finishes.
+Download `s3migrate.jar` from [Releases](https://github.com/jortage/s3migrate/releases),
+then run it. Both `./s3migrate.jar` and `java -jar s3migrate.jar` will do. (Java
+must be installed.) The tool will walk you through all the data it needs, and
+then print out a summary of what it's doing until it finishes.
 
 **Note**: It is unavoidable that all data must be downloaded locally and then
 uploaded to the new server. There's no way to get an S3-compatible server to
