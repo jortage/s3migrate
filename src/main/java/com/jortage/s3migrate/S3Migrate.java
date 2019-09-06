@@ -151,42 +151,48 @@ public class S3Migrate {
 			BlobStore from = fromCtx.getBlobStore();
 			BlobStore to = toCtx.getBlobStore();
 			startPrintProgress("Collecting files");
-			long fromCount = from.countBlobs(fromBucket);
-			PageSet<? extends StorageMetadata> allFromBlobs = from.list(fromBucket, new ListContainerOptions().recursive());
+			PageSet<? extends StorageMetadata> allFromBlobs = from.list(fromBucket, new ListContainerOptions().recursive().maxResults(32));
 			endPrintProgress();
 			startPrintProgress("Copying files");
-			updateProgress(0, fromCount);
+			updateProgress(0);
 			AtomicLong done = new AtomicLong(0);
 			final String fromBucketF = fromBucket;
 			final String toBucketF = toBucket;
-			allFromBlobs.stream().parallel().forEach((sm) -> {
-				long seconds = 5;
-				while (true) {
-					try {
-						Blob fromBlob = from.getBlob(fromBucketF, sm.getName());
-						Blob toBlob = to.blobBuilder(sm.getName())
-							.tier(sm.getTier())
-							.type(sm.getType())
-							.userMetadata(sm.getUserMetadata())
-							.payload(fromBlob.getPayload())
-							.build();
-						to.putBlob(toBucketF, toBlob);
-						done.addAndGet(1);
-						addProgress();
-						break;
-					} catch (Exception e) {
-						e.printStackTrace(System.out);
-						System.out.println("! Got an error. Trying "+sm.getName()+" again in "+seconds+" seconds...");
+			while (true) {
+				allFromBlobs.stream().parallel().forEach((sm) -> {
+					long seconds = 5;
+					while (true) {
 						try {
-							Thread.sleep(seconds*1000);
-						} catch (InterruptedException e1) {
-						}
-						if (seconds < 60) {
-							seconds *= 2;
+							Blob fromBlob = from.getBlob(fromBucketF, sm.getName());
+							Blob toBlob = to.blobBuilder(sm.getName())
+								.tier(sm.getTier())
+								.type(sm.getType())
+								.userMetadata(sm.getUserMetadata())
+								.payload(fromBlob.getPayload())
+								.build();
+							to.putBlob(toBucketF, toBlob);
+							done.addAndGet(1);
+							addProgress();
+							break;
+						} catch (Exception e) {
+							e.printStackTrace(System.out);
+							System.out.println("! Got an error. Trying "+sm.getName()+" again in "+seconds+" seconds...");
+							try {
+								Thread.sleep(seconds*1000);
+							} catch (InterruptedException e1) {
+							}
+							if (seconds < 60) {
+								seconds *= 2;
+							}
 						}
 					}
+				});
+				if (allFromBlobs.getNextMarker() != null) {
+					allFromBlobs = from.list(fromBucket, new ListContainerOptions().recursive().afterMarker(allFromBlobs.getNextMarker()).maxResults(32));
+				} else {
+					break;
 				}
-			});
+			}
 			endPrintProgress();
 			System.out.println("! All done.");
 		} else {
@@ -196,41 +202,36 @@ public class S3Migrate {
 
 	private static Thread progressPrintThread = null;
 	private static AtomicLong progressAmt = new AtomicLong(-1);
-	private static AtomicLong progressMax = new AtomicLong();
 
 	private static void startPrintProgress(String str) {
 		if (progressPrintThread != null) {
 			endPrintProgress();
 		}
 		progressAmt.set(-1);
-		progressMax.set(0);
 		String[] progress = { "|", "/", "-", "\\" };
 		progressPrintThread = new Thread(() -> {
 			try {
 				int i = 0;
 				while (true) {
 					long amt = progressAmt.get();
-					long max = progressMax.get();
 					if (amt == -1) {
 						System.out.print("\r"+progress[i++%4]+" "+str+"...");
 					} else {
-						System.out.print("\r"+progress[i++%4]+" "+str+" ("+amt+"/"+max+" - "+((amt*100)/max)+"%)");
+						System.out.print("\r"+progress[i++%4]+" "+str+" ("+amt+" done so far)");
 					}
 					Thread.sleep(50);
 				}
 			} catch (InterruptedException e) {
 				long amt = progressAmt.get();
-				long max = progressMax.get();
-				System.out.print("\r  "+Strings.repeat(" ", str.length()+2+Long.toString(amt).length()+1+Long.toString(max).length()+3+3+2)+"\r");
+				System.out.print("\r  "+Strings.repeat(" ", str.length()+2+Long.toString(amt).length()+13)+"\r");
 				return;
 			}
 		}, "Progress print thread");
 		progressPrintThread.start();
 	}
 
-	private static void updateProgress(long amt, long max) {
+	private static void updateProgress(long amt) {
 		progressAmt.set(amt);
-		progressMax.set(max);
 	}
 
 	private static void addProgress() {
