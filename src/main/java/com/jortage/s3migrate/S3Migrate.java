@@ -3,6 +3,7 @@ package com.jortage.s3migrate;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -13,7 +14,6 @@ import org.jclouds.blobstore.domain.Blob;
 import org.jclouds.blobstore.domain.PageSet;
 import org.jclouds.blobstore.domain.StorageMetadata;
 import org.jclouds.blobstore.options.ListContainerOptions;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -138,15 +138,18 @@ public class S3Migrate {
 		if (queryYN(scanner, "! We're ready to migrate the bucket.\n"
 				+ "  Any existing files at the same path in the new bucket as there are files in the old bucket WILL BE OVERWRITTEN!\n"
 				+ "? This is your last chance: Perform the migration? This may incur large egress and ingress fees.")) {
-			BlobStoreContext fromCtx = ContextBuilder.newBuilder("s3")
+			Properties overrides = new Properties();
+			BlobStoreContext fromCtx = ContextBuilder.newBuilder(fromServer.contains("amazonaws") ? "aws-s3" : "s3")
 					.endpoint(fromServer)
 					.credentials(fromAccessId, fromAccessKey)
 					.name("source")
+					.overrides(overrides)
 					.build(BlobStoreContext.class);
-			BlobStoreContext toCtx = ContextBuilder.newBuilder("s3")
+			BlobStoreContext toCtx = ContextBuilder.newBuilder(toServer.contains("amazonaws") ? "aws-s3" : "s3")
 					.endpoint(toServer)
 					.credentials(toAccessId, toAccessKey)
 					.name("destination")
+					.overrides(overrides)
 					.build(BlobStoreContext.class);
 			BlobStore from = fromCtx.getBlobStore();
 			BlobStore to = toCtx.getBlobStore();
