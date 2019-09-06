@@ -1,0 +1,21 @@
+plugins {
+	id 'java'
+	id 'us.kirchmeier.capsule' version '1.0.2'
+}	
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'com.h2database:h2-mvstore:1.4.199'
+	implementation 'org.apache.jclouds:jclouds-allblobstore:2.1.2'
+}
+
+project.configurations.implementation.setCanBeResolved(true)
+
+task capsule(type: MavenCapsule) {
+	reallyExecutable
+	embedConfiguration configurations.implementation
+	applicationClass 'com.jortage.s3migrate.S3Migrate'
+}
