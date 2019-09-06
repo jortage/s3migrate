@@ -27,7 +27,7 @@ import com.google.common.io.Files;
 public class S3Migrate {
 
 	private static final ImmutableMap<String, String> shorthand = ImmutableMap.<String, String>builder()
-			.put("amazon", "https://s3.amazonaws.com")
+			.put("aws", "https://s3.amazonaws.com")
 			.put("do-sfo2", "https://sfo2.digitaloceanspaces.com")
 			.put("do-nyc3", "https://nyc3.digitaloceanspaces.com")
 			.put("do-sgp1", "https://sgp1.digitaloceanspaces.com")
@@ -139,13 +139,13 @@ public class S3Migrate {
 				+ "  Any existing files at the same path in the new bucket as there are files in the old bucket WILL BE OVERWRITTEN!\n"
 				+ "? This is your last chance: Perform the migration? This may incur large egress and ingress fees.")) {
 			Properties overrides = new Properties();
-			BlobStoreContext fromCtx = ContextBuilder.newBuilder(fromServer.contains("amazonaws") ? "aws-s3" : "s3")
+			BlobStoreContext fromCtx = ContextBuilder.newBuilder(fromServer.endsWith("amazonaws.com") ? "aws-s3" : "s3")
 					.endpoint(fromServer)
 					.credentials(fromAccessId, fromAccessKey)
 					.name("source")
 					.overrides(overrides)
 					.build(BlobStoreContext.class);
-			BlobStoreContext toCtx = ContextBuilder.newBuilder(toServer.contains("amazonaws") ? "aws-s3" : "s3")
+			BlobStoreContext toCtx = ContextBuilder.newBuilder(toServer.endsWith("amazonaws.com") ? "aws-s3" : "s3")
 					.endpoint(toServer)
 					.credentials(toAccessId, toAccessKey)
 					.name("destination")
