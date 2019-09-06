@@ -11,9 +11,12 @@ import org.jclouds.ContextBuilder;
 import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
 import org.jclouds.blobstore.domain.Blob;
+import org.jclouds.blobstore.domain.BlobAccess;
 import org.jclouds.blobstore.domain.PageSet;
 import org.jclouds.blobstore.domain.StorageMetadata;
 import org.jclouds.blobstore.options.ListContainerOptions;
+import org.jclouds.blobstore.options.PutOptions;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -166,6 +169,7 @@ public class S3Migrate {
 					long seconds = 5;
 					while (true) {
 						try {
+							BlobAccess acc = from.getBlobAccess(fromBucketF, sm.getName());
 							Blob fromBlob = from.getBlob(fromBucketF, sm.getName());
 							Blob toBlob = to.blobBuilder(sm.getName())
 								.tier(sm.getTier())
@@ -173,7 +177,7 @@ public class S3Migrate {
 								.userMetadata(sm.getUserMetadata())
 								.payload(fromBlob.getPayload())
 								.build();
-							to.putBlob(toBucketF, toBlob);
+							to.putBlob(toBucketF, toBlob, new PutOptions().setBlobAccess(acc));
 							done.addAndGet(1);
 							addProgress();
 							break;
