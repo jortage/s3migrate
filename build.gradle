@@ -10,8 +10,7 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.h2database:h2-mvstore:1.4.199'
-	implementation 'org.apache.jclouds:jclouds-allblobstore:2.1.2'
+	implementation 'org.apache.jclouds:jclouds-allblobstore:2.5.0'
 }
 
 jar {
