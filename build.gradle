@@ -1,7 +1,9 @@
 plugins {
+	id 'com.github.johnrengelman.shadow' version '7.1.2'
 	id 'java'
-	id 'us.kirchmeier.capsule' version '1.0.2'
 }	
+
+sourceCompatibility = targetCompatibility = 8
 
 repositories {
 	mavenCentral()
@@ -12,10 +14,16 @@ dependencies {
 	implementation 'org.apache.jclouds:jclouds-allblobstore:2.1.2'
 }
 
-project.configurations.implementation.setCanBeResolved(true)
-
-task capsule(type: MavenCapsule) {
-	reallyExecutable
-	embedConfiguration configurations.implementation
-	applicationClass 'com.jortage.s3migrate.S3Migrate'
+jar {
+	destinationDirectory.set(file('build/tmp'))
+	classifier = 'slim'
 }
+
+shadowJar {
+	classifier = ''
+	manifest.attributes (
+		'Main-Class': 'com.jortage.s3migrate.S3Migrate'
+	)
+}
+
+build.dependsOn shadowJar

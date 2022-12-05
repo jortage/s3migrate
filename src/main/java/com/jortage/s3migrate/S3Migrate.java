@@ -35,6 +35,7 @@ public class S3Migrate {
 			.put("do-nyc3", "https://nyc3.digitaloceanspaces.com")
 			.put("do-sgp1", "https://sgp1.digitaloceanspaces.com")
 			.put("do-fra1", "https://fra1.digitaloceanspaces.com")
+			.put("do-ams3", "https://ams3.digitaloceanspaces.com")
 			.put("wasabi-east", "https://s3.wasabisys.com")
 			.put("wasabi-west", "https://s3.us-west-1.wasabisys.com")
 			.put("jortage-pool", "https://pool-api.jortage.com")
